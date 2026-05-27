@@ -3,10 +3,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #edf2f7;
+  --background: #f5f4f0;
   --foreground: #0f172a;
   --card: rgba(255, 255, 255, 0.8);
-  --muted: #64748b;
+  --muted: #57534e;
 }
 
 .dark {
@@ -27,9 +27,9 @@ html {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.18), transparent 28%),
-    radial-gradient(circle at top right, rgba(139, 30, 63, 0.18), transparent 32%),
-    linear-gradient(180deg, rgba(15, 76, 129, 0.1), transparent 30%),
+    radial-gradient(circle at top left, rgba(27, 58, 92, 0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(139, 26, 43, 0.1), transparent 30%),
+    linear-gradient(180deg, rgba(192, 138, 27, 0.08), transparent 34%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
@@ -44,7 +44,7 @@ h4 {
 
 .grid-surface {
   background-image:
-    linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+    linear-gradient(rgba(120, 113, 108, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 113, 108, 0.08) 1px, transparent 1px);
   background-size: 24px 24px;
 }

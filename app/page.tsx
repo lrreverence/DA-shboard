@@ -3,50 +3,106 @@ import { Badge } from "@tremor/react";
 
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
 import { getDashboardData } from "@/lib/data";
+import { formatCurrency } from "@/lib/utils";
 
 export default async function HomePage() {
   const data = await getDashboardData();
+  const topScam = data.fhiRanking[0];
+  const topPlatform = [...data.platformLosses].sort(
+    (a, b) => b.total_loss_php - a.total_loss_php,
+  )[0];
+  const totalPlatformLoss = data.platformLosses.reduce(
+    (sum, row) => sum + row.total_loss_php,
+    0,
+  );
+  const topPlatformShare = Math.round((topPlatform.total_loss_php / totalPlatformLoss) * 100);
 
   return (
     <main className="min-h-screen">
-      <section className="grid-surface border-b border-slate-200/70 dark:border-slate-800/70">
+      <section className="border-b border-stone-200 bg-[#f3efe7] dark:border-[#0f2740] dark:bg-[#061a31]">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 rounded-[2rem] border border-white/50 bg-slate-900/85 p-6 text-white shadow-2xl shadow-slate-900/20 backdrop-blur sm:p-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-4xl space-y-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge color="teal">Financial Harm Index</Badge>
-                  <Badge color="amber">2024–2025 Scam-Type Scope</Badge>
-                  <Badge color="rose">Philippines Online Scam Analytics</Badge>
-                </div>
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-                  Which online scam type in the Philippines caused the greatest financial harm from 2023–2025, and which sector of society is most victimized?
-                </h1>
-                <p className="max-w-3xl text-sm text-slate-300 sm:text-base">
-                  First-view answer: Online Selling ranks first by Financial Harm Index, while suburban residents show the highest exposure and millennials show the highest average loss. The dashboard below keeps that answer above the fold and lets you drill into year, scam type, platform, and victim profile.
-                </p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3 text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-[#102944]/65 dark:text-white/65">
+              <span>Financial Harm Index</span>
+              <span>•</span>
+              <span>2024–2025 Scam-Type Scope</span>
+              <span>•</span>
+              <span>Philippines Online Scam Analytics</span>
+            </div>
+            <ThemeToggle />
+          </div>
+
+          <div className="max-w-6xl space-y-4">
+            <h1 className="text-balance text-4xl font-bold leading-[1.08] tracking-tight text-[#102944] sm:text-5xl lg:text-[4.15rem] dark:text-white">
+              Which online scam type in the Philippines caused the greatest financial harm from 2024–2025, and which sector of society is most victimized?
+            </h1>
+            <p className="max-w-4xl text-lg text-[#22374e]/78 sm:text-xl dark:text-white/72">
+              Online Selling ranks first by Financial Harm Index. Suburban Millennials carry the greatest financial burden.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-[#22374e]/80 dark:text-white/78">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#102944]/10 bg-white/55 px-4 py-2 shadow-sm dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+                <ShieldAlert size={15} className="text-[#1b3a5c] dark:text-[#6fb2ff]" />
+                <span>Method: FHI = average loss per victim × prevalence weight</span>
               </div>
-              <div className="flex items-center gap-3 self-start">
-                <ThemeToggle />
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#102944]/10 bg-white/55 px-4 py-2 shadow-sm dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+                <ArrowRight size={15} className="text-[#1b3a5c] dark:text-[#6fb2ff]" />
+                <span>2023 is baseline context only, not part of the FHI calculation</span>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
-              <span className="inline-flex items-center gap-2">
-                <ShieldAlert size={15} />
-                Method: FHI = average loss per victim × prevalence weight
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <ArrowRight size={15} />
-                2023 is baseline context only and is not part of the scam-type FHI calculation
-              </span>
-            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <HeroCard
+              label="Highest Harm Scam"
+              value={topScam.scam_type}
+              note={`Avg FHI ${Math.round(topScam.avg_fhi).toLocaleString()}`}
+            />
+            <HeroCard
+              label="2-Year Rank"
+              value="#1  2024 & 2025"
+              note="Consistent across both years"
+            />
+            <HeroCard
+              label="Top Platform Loss"
+              value={formatCurrency(topPlatform.total_loss_php, true)}
+              note={`${topPlatform.platform} — ${topPlatformShare}% of total losses`}
+            />
+            <HeroCard
+              label="Most Victimized"
+              value="Suburban Millennials"
+              note="Highest exposure + avg loss"
+            />
           </div>
         </div>
       </section>
 
       <DashboardClient initialData={data} />
     </main>
+  );
+}
+
+function HeroCard({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string;
+  note: string;
+}) {
+  return (
+    <div className="rounded-[1.35rem] border border-[#102944]/8 bg-white/72 px-6 py-5 shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)] backdrop-blur dark:border-white/8 dark:bg-[#132f4d] dark:shadow-[0_18px_40px_-20px_rgba(0,0,0,0.65)]">
+      <div className="flex gap-4">
+        <div className="w-1 rounded-full bg-[#cc1936]" />
+        <div className="min-w-0">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#102944]/70 dark:text-white/72">
+            {label}
+          </div>
+          <div className="mt-4 text-3xl font-bold leading-tight text-[#102944] dark:text-white">{value}</div>
+          <div className="mt-3 text-sm text-[#22374e]/78 dark:text-white/65">{note}</div>
+        </div>
+      </div>
+    </div>
   );
 }
