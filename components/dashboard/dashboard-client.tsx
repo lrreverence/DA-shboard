@@ -31,10 +31,10 @@ import { formatCurrency, formatNumber } from "@/lib/utils";
 const SCAM_COLORS: Record<string, string> = {
   "Online Selling": "#8b1a2b",
   "Investment/Tasking": "#c08a1b",
-  Vishing: "#48617a",
-  "Hijacked Profile/ID": "#5f6b76",
+  Vishing: "#0f766e",
+  "Hijacked Profile/ID": "#5b21b6",
   "Loan/Lending Scam": "#334155",
-  "Travel Scam": "#7c8793",
+  "Travel Scam": "#9a3412",
 };
 
 const PLATFORM_COLORS = ["#1b3a5c", "#365f8b", "#5a7ba4", "#88a1bf"];
@@ -103,12 +103,10 @@ export function DashboardClient({ initialData }: { initialData: DashboardPayload
     selectedScams,
     selectedYear,
     selectedYears,
-    trendMode,
     setFocusScam,
     setSelectedScams,
     setSelectedYear,
     setSelectedYears,
-    setTrendMode,
   } = useDashboardStore();
 
   useEffect(() => {
@@ -149,17 +147,66 @@ export function DashboardClient({ initialData }: { initialData: DashboardPayload
     (row) => selectedScams.includes(row.scam_type) && selectedYears.includes(row.year),
   );
 
+  const trendChartData = useMemo(() => {
+    return selectedYears
+      .slice()
+      .sort((a, b) => a - b)
+      .map((year) => {
+        const yearRows = filteredTrend.filter((row) => row.year === year);
+        const record: Record<string, number | string | null> = { year };
+
+        for (const scam of selectedScams) {
+          const match = yearRows.find((row) => row.scam_type === scam);
+          record[scam] = match ? match.case_count : null;
+        }
+
+        return record;
+      });
+  }, [filteredTrend, selectedScams, selectedYears]);
+
   const byAgeLoss = useMemo(() => {
     const millennial = demographics.find((item) => item.segment === "Millennials");
     const genX = demographics.find((item) => item.segment === "Gen X");
     return [
       {
         segment: "Millennials",
+        ageRange: "Born 1981–1996",
         value: extractFirstNumber(millennial?.finding ?? "") ?? 0,
       },
       {
         segment: "Gen X",
+        ageRange: "Born 1965–1980",
         value: extractFirstNumber(genX?.finding ?? "") ?? 0,
+      },
+    ];
+  }, [demographics]);
+
+  const ageProfiles = useMemo(() => {
+    const millennial = demographics.find((item) => item.segment === "Millennials");
+    const genX = demographics.find((item) => item.segment === "Gen X");
+    const genZ = demographics.find((item) => item.segment === "Gen Z");
+    const silent = demographics.find((item) => item.segment === "Silent Generation");
+
+    return [
+      {
+        group: "Millennials",
+        ageRange: "Born 1981–1996",
+        finding: millennial?.finding ?? "",
+      },
+      {
+        group: "Gen X",
+        ageRange: "Born 1965–1980",
+        finding: genX?.finding ?? "",
+      },
+      {
+        group: "Gen Z",
+        ageRange: "Born 1997–2012",
+        finding: genZ?.finding ?? "",
+      },
+      {
+        group: "Silent Generation",
+        ageRange: "Born 1928–1945",
+        finding: silent?.finding ?? "",
       },
     ];
   }, [demographics]);
@@ -253,7 +300,7 @@ export function DashboardClient({ initialData }: { initialData: DashboardPayload
 
   return (
     <section className="mx-auto flex max-w-7xl flex-col gap-8 px-4 pb-10 sm:px-6 lg:px-8">
-      <section className="-mt-2 rounded-b-[2rem] border-x border-b border-stone-200 bg-[#fdfcf9] px-3 pb-4 pt-2 shadow-[0_24px_45px_-35px_rgba(15,23,42,0.35)] sm:px-5 dark:border-slate-800 dark:bg-slate-950/95">
+      <section className="mt-0.5 rounded-b-[2rem] border-x border-b border-stone-200 bg-[#fdfcf9] px-3 pb-4 pt-2 shadow-[0_24px_45px_-35px_rgba(15,23,42,0.35)] sm:px-5 dark:border-slate-800 dark:bg-slate-950/95">
         <div className="grid grid-cols-2 gap-2 border-b border-stone-200 pb-2 sm:grid-cols-4 sm:gap-6 dark:border-slate-800">
           {TAB_ITEMS.map((tab) => (
             <button
@@ -339,7 +386,7 @@ export function DashboardClient({ initialData }: { initialData: DashboardPayload
           <div className="grid gap-6">
             <ChartCard
               title="Platform Losses"
-              subtitle="Which payment platforms absorbed the biggest losses in 2024?"
+              subtitle="2024-only view: available platform-loss data is reported for 2024, not 2025."
             >
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={initialData.platformLosses}>
@@ -463,26 +510,8 @@ export function DashboardClient({ initialData }: { initialData: DashboardPayload
             </ChartCard>
 
             <ChartCard
-              title="Scam Cases Over Time"
-              subtitle="Toggle between grouped bars and line trend"
-              controls={
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant={trendMode === "bar" ? "default" : "outline"}
-                    onClick={() => setTrendMode("bar")}
-                  >
-                    Bars
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={trendMode === "line" ? "default" : "outline"}
-                    onClick={() => setTrendMode("line")}
-                  >
-                    Line
-                  </Button>
-                </div>
-              }
+              title="Annual Scam Cases by Type"
+              subtitle="Grouped annual comparison. Available source data is yearly, not monthly."
             >
               <div className="mb-4 flex flex-wrap gap-2">
                 {allYears.map((year) => (
@@ -503,53 +532,27 @@ export function DashboardClient({ initialData }: { initialData: DashboardPayload
                 ))}
               </div>
               <ResponsiveContainer width="100%" height={204}>
-                {trendMode === "bar" ? (
-                  <BarChart data={filteredTrend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#d6d3d1" vertical={false} />
-                    <XAxis dataKey="year" tick={{ fill: "#57534e", fontSize: 12 }} />
-                    <YAxis tick={{ fill: "#57534e", fontSize: 12 }} />
-                    <Tooltip
-                      formatter={(value: number) => [formatNumber(value), "Cases"]}
-                      contentStyle={{ borderRadius: 16, borderColor: "#d6d3d1" }}
-                    />
-                    <Legend />
-                    {allScams
-                      .filter((scam) => selectedScams.includes(scam))
-                      .map((scam) => (
-                        <Bar
-                          key={scam}
-                          dataKey={(row) => (row.scam_type === scam ? row.case_count : 0)}
-                          name={scam}
-                          fill={SCAM_COLORS[scam] ?? "#7c8793"}
-                          radius={[8, 8, 0, 0]}
-                        />
-                      ))}
-                  </BarChart>
-                ) : (
-                  <LineChart data={filteredTrend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#d6d3d1" vertical={false} />
-                    <XAxis dataKey="year" tick={{ fill: "#57534e", fontSize: 12 }} />
-                    <YAxis tick={{ fill: "#57534e", fontSize: 12 }} />
-                    <Tooltip
-                      formatter={(value: number) => [formatNumber(value), "Cases"]}
-                      contentStyle={{ borderRadius: 16, borderColor: "#d6d3d1" }}
-                    />
-                    <Legend />
-                    {allScams
-                      .filter((scam) => selectedScams.includes(scam))
-                      .map((scam) => (
-                        <Line
-                          key={scam}
-                          type="monotone"
-                          name={scam}
-                          dataKey={(row) => (row.scam_type === scam ? row.case_count : null)}
-                          stroke={SCAM_COLORS[scam] ?? "#7c8793"}
-                          strokeWidth={3}
-                          dot={{ r: 4 }}
-                        />
-                      ))}
-                  </LineChart>
-                )}
+                <BarChart data={trendChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#d6d3d1" vertical={false} />
+                  <XAxis dataKey="year" tick={{ fill: "#57534e", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "#57534e", fontSize: 12 }} />
+                  <Tooltip
+                    formatter={(value: number) => [formatNumber(value), "Cases"]}
+                    contentStyle={{ borderRadius: 16, borderColor: "#d6d3d1" }}
+                  />
+                  <Legend />
+                  {allScams
+                    .filter((scam) => selectedScams.includes(scam))
+                    .map((scam) => (
+                      <Bar
+                        key={scam}
+                        dataKey={scam}
+                        name={scam}
+                        fill={SCAM_COLORS[scam] ?? "#7c8793"}
+                        radius={[8, 8, 0, 0]}
+                      />
+                    ))}
+                </BarChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
@@ -560,34 +563,42 @@ export function DashboardClient({ initialData }: { initialData: DashboardPayload
         <div className="grid gap-6">
           <div className="grid gap-6 xl:grid-cols-[1fr_1fr_1fr]">
             <ChartCard
-              title="Average Loss by Age"
-              subtitle="Millennials show the highest average financial loss"
+              title="Age Group Findings"
+              subtitle="Reported average-loss values are available for Millennials and Gen X."
             >
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={byAgeLoss}>
-                  <defs>
-                    <linearGradient id="ageLoss" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b1a2b" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#8b1a2b" stopOpacity={0.06} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#d6d3d1" vertical={false} />
-                  <XAxis dataKey="segment" tick={{ fill: "#57534e", fontSize: 12 }} />
-                  <YAxis tick={{ fill: "#57534e", fontSize: 12 }} />
-                  <Tooltip
-                    formatter={(value: number) => [formatCurrency(value), "Average loss"]}
-                    contentStyle={{ borderRadius: 16, borderColor: "#d6d3d1" }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#8b1a2b"
-                    fillOpacity={1}
-                    fill="url(#ageLoss)"
-                    strokeWidth={3}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div>
+                <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-stone-500 dark:text-slate-400">
+                  Reported Average Loss (PHP)
+                </div>
+                <ResponsiveContainer width="100%" height={260}>
+                  <AreaChart data={byAgeLoss}>
+                    <defs>
+                      <linearGradient id="ageLoss" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8b1a2b" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#8b1a2b" stopOpacity={0.06} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#d6d3d1" vertical={false} />
+                    <XAxis dataKey="segment" tick={{ fill: "#57534e", fontSize: 12 }} />
+                    <YAxis tick={{ fill: "#57534e", fontSize: 12 }} />
+                    <Tooltip
+                      formatter={(value: number) => [formatCurrency(value), "Average loss"]}
+                      contentStyle={{ borderRadius: 16, borderColor: "#d6d3d1" }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#8b1a2b"
+                      fillOpacity={1}
+                      fill="url(#ageLoss)"
+                      strokeWidth={3}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300">
+                Source data reports average-loss values only for Millennials and Gen X. Gen Z and the Silent Generation appear elsewhere in the dashboard through separate demographic findings.
+              </div>
             </ChartCard>
 
             <ChartCard
