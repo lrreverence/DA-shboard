@@ -285,14 +285,17 @@ export function DashboardClient({ initialData }: { initialData: DashboardPayload
   }, [allScams, allYears, initialData.master]);
 
   const scamMixData = useMemo(
-    () =>
-      initialData.master
-        .filter((row) => row.year === selectedYear)
-        .map((row) => ({
-          name: row.scam_type,
-          value: row.case_count,
-          fill: SCAM_COLORS[row.scam_type] ?? "#7c8793",
-        })),
+    () => {
+      const rows = initialData.master.filter((row) => row.year === selectedYear);
+      const total = rows.reduce((sum, row) => sum + row.case_count, 0);
+
+      return rows.map((row) => ({
+        name: row.scam_type,
+        value: row.case_count,
+        share: total > 0 ? (row.case_count / total) * 100 : 0,
+        fill: SCAM_COLORS[row.scam_type] ?? "#7c8793",
+      }));
+    },
     [initialData.master, selectedYear],
   );
 
@@ -501,7 +504,10 @@ export function DashboardClient({ initialData }: { initialData: DashboardPayload
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [formatNumber(value), "Cases"]}
+                    formatter={(value: number, _name, item) => [
+                      `${formatNumber(value)} cases | ${item.payload.share.toFixed(1)}%`,
+                      "Share of selected year",
+                    ]}
                     contentStyle={{ borderRadius: 16, borderColor: "#d6d3d1" }}
                   />
                   <Legend />

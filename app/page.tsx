@@ -23,24 +23,25 @@ export default async function HomePage() {
       <section className="border-b border-stone-200 bg-[#f3efe7] dark:border-[#0f2740] dark:bg-[#061a31]">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3 text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-[#102944]/65 dark:text-white/65">
+            <div className="w-10" />
+            <ThemeToggle />
+          </div>
+
+          <div className="mx-auto flex max-w-6xl flex-col items-center space-y-4 text-center">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-[#102944]/65 dark:text-white/65">
               <span>Financial Harm Index</span>
               <span>•</span>
               <span>2024–2025 Scam-Type Scope</span>
               <span>•</span>
               <span>Philippines Online Scam Analytics</span>
             </div>
-            <ThemeToggle />
-          </div>
-
-          <div className="max-w-6xl space-y-4">
             <h1 className="text-balance text-4xl font-bold leading-[1.08] tracking-tight text-[#102944] sm:text-5xl lg:text-[4.15rem] dark:text-white">
               Which online scam type in the Philippines caused the greatest financial harm from 2024–2025, and which sector of society is most victimized?
             </h1>
             <p className="max-w-4xl text-lg text-[#22374e]/78 sm:text-xl dark:text-white/72">
               Online Selling ranks first by Financial Harm Index. Suburban Millennials carry the greatest financial burden.
             </p>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-[#22374e]/80 dark:text-white/78">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-[#22374e]/80 dark:text-white/78">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#102944]/10 bg-white/55 px-4 py-2 shadow-sm dark:border-white/10 dark:bg-white/5 dark:shadow-none">
                 <ShieldAlert size={15} className="text-[#1b3a5c] dark:text-[#6fb2ff]" />
                 <span>Method: FHI = average loss per victim × prevalence weight</span>
